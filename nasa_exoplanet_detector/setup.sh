@@ -14,9 +14,14 @@ say() { echo -e "${GREEN}==>${NC} $*"; }
 warn() { echo -e "${YELLOW}==>${NC} $*"; }
 err() { echo -e "${RED}==>${NC} $*"; }
 
-say "Creating virtual environment"
-$PY -m venv "$VENV_DIR"
-source "$VENV_DIR/bin/activate"
+# Check if we're running in Docker (skip venv creation)
+if [ -f /.dockerenv ] || [ -n "${DOCKER_ENV:-}" ]; then
+    say "Running in Docker - skipping virtual environment creation"
+else
+    say "Creating virtual environment"
+    $PY -m venv "$VENV_DIR"
+    source "$VENV_DIR/bin/activate"
+fi
 
 say "Upgrading pip"
 pip install --upgrade pip
