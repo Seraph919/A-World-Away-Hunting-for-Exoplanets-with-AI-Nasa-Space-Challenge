@@ -4,7 +4,7 @@ One-command setup Django app with ML models to classify exoplanet candidates usi
 
 ## Quickstart
 
-Run the setup script (creates venv, installs deps, downloads data, trains 3 models, runs server):
+Run the setup script (creates venv, installs deps, downloads data, trains 4 models, runs server):
 
 ```bash
 ./setup.sh

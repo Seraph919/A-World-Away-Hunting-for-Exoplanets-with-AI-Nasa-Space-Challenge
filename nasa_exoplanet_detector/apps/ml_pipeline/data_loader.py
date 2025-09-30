@@ -39,13 +39,27 @@ from typing import Optional, Dict
 
 def ensure_datasets(offline_fallback_path: Optional[str] = None) -> Dict[str, str]:
     paths = {}
+    
+    # Check if we have the large cumulative dataset first
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    cumulative_path = os.path.join(base_dir, 'cumulative_2025.09.20_14.12.59.csv')
+    
+    if os.path.exists(cumulative_path):
+        print(f"📊 Using large cumulative dataset: {cumulative_path}")
+        paths['kepler_koi'] = cumulative_path
+        return paths
+    
+    # Try online download
     try:
         paths['kepler_koi'] = download_csv(NASA_SOURCES['kepler_koi'], os.path.join(DATA_DIR, 'raw_kepler_koi.csv'))
-    except Exception:
+        print(f"🌐 Downloaded fresh data from NASA")
+    except Exception as e:
+        print(f"⚠️  Failed to download from NASA: {e}")
         if offline_fallback_path and os.path.exists(offline_fallback_path):
+            print(f"📂 Using offline fallback: {offline_fallback_path}")
             paths['kepler_koi'] = offline_fallback_path
         else:
-            raise
+            raise Exception("No datasets available for training!")
     return paths
 
 

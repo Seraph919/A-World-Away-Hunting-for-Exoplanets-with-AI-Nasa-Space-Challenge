@@ -54,7 +54,7 @@ python manage.py migrate --noinput
 say "Clearing previous prediction results (starting fresh)"
 python manage.py clear_results 2>/dev/null || echo "⚠ Clear results command not found, continuing..."
 
-say "Training baseline models (RF, SVM, MLP)"
+say "Training baseline models (RF, SVM, MLP, XGBoost)"
 python - <<PYCODE
 try:
     from apps.ml_pipeline.model_trainer import train_all
