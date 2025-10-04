@@ -9,10 +9,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     default-libmysqlclient-dev \
+    libmariadb-dev \
     libxml2-dev \
     libxslt1-dev \
     libssl-dev \
     pkg-config \
+    python3-dev \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 

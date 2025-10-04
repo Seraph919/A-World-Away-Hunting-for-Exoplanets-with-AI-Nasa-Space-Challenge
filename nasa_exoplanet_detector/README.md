@@ -4,11 +4,16 @@ One-command setup Django app with ML models to classify exoplanet candidates usi
 
 ## Quickstart
 
-Run the setup script (creates venv, installs deps, downloads data, trains 3 models, runs server):
+Run the setup script (automatically installs system dependencies, creates venv, installs Python packages, downloads data, trains 3 models, runs server):
 
 ```bash
 ./setup.sh
 ```
+
+The setup script automatically detects your system and installs required dependencies:
+- **Debian/Ubuntu**: Automatically installs `libpq-dev`, `libmysqlclient-dev`, `pkg-config`, `python3-dev`
+- **macOS**: Uses Homebrew to install PostgreSQL, MySQL, pkg-config, and Python
+- **Other systems**: Shows manual installation instructions
 
 Then open http://127.0.0.1:8000/
 
@@ -46,6 +51,48 @@ The results page (`/results/`) displays all your predictions with comprehensive 
 - Single predictions from the `/predict/` page
 - Batch predictions from CSV uploads via `/upload/`
 - All results are stored persistently in the database
+
+## Troubleshooting
+
+### Database Package Installation Errors
+
+The `./setup.sh` script now automatically handles system dependencies for most systems. However, if you still encounter errors related to `psycopg2` or `mysqlclient`, you may need to install system dependencies manually:
+
+**Install all required system packages:**
+```bash
+# Ubuntu/Debian
+sudo apt-get update
+sudo apt-get install libpq-dev libmysqlclient-dev pkg-config python3-dev
+
+# Fedora/CentOS/RHEL
+sudo dnf install postgresql-devel mysql-devel pkgconfig python3-devel
+
+# Arch Linux
+sudo pacman -S postgresql-libs mariadb-libs pkgconf python
+
+# macOS (with Homebrew)
+brew install postgresql mysql pkg-config python
+```
+
+**Alternative: Use binary packages instead**
+If you prefer to avoid installing system dependencies, edit `requirements.txt` and replace:
+- `psycopg2==2.9.9` with `psycopg2-binary==2.9.9`
+- `mysqlclient==2.2.4` with `PyMySQL==1.1.0`
+
+Then run `./setup.sh` again.
+
+### Common Issues Summary
+
+The most common installation issues require these system packages:
+- **PostgreSQL**: `libpq-dev` (Ubuntu/Debian) or `postgresql-devel` (Fedora)
+- **MySQL**: `libmysqlclient-dev` (Ubuntu/Debian) or `mysql-devel` (Fedora)  
+- **Python**: `python3-dev` (Ubuntu/Debian) or `python3-devel` (Fedora)
+- **Build tools**: `pkg-config` (Ubuntu/Debian) or `pkgconfig` (Fedora)
+
+For a quick fix on Ubuntu/Debian, run:
+```bash
+sudo apt-get install libpq-dev libmysqlclient-dev pkg-config python3-dev
+```
 
 ## Offline sample
 If dataset download fails, a small sample CSV in `data/sample/kepler_sample.csv` will be used.

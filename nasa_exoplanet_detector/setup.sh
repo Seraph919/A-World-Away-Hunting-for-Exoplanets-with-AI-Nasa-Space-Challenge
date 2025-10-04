@@ -14,13 +14,80 @@ say() { echo -e "${GREEN}==>${NC} $*"; }
 warn() { echo -e "${YELLOW}==>${NC} $*"; }
 err() { echo -e "${RED}==>${NC} $*"; }
 
-# Check if we're running in Docker (skip venv creation)
+# Check if a package is installed on Debian-based systems
+check_deb_package() {
+    dpkg -l "$1" 2>/dev/null | grep -q "^ii"
+}
+
+# Install system dependencies for Debian-based systems
+install_system_deps() {
+    if command -v apt-get >/dev/null 2>&1; then
+        say "Detected Debian-based system, checking required system dependencies"
+        
+        # List of required packages
+        REQUIRED_PACKAGES="libpq-dev libmysqlclient-dev pkg-config python3-dev"
+        MISSING_PACKAGES=""
+        
+        # Check which packages are missing
+        for pkg in $REQUIRED_PACKAGES; do
+            if ! check_deb_package "$pkg"; then
+                MISSING_PACKAGES="$MISSING_PACKAGES $pkg"
+            fi
+        done
+        
+        if [ -z "$MISSING_PACKAGES" ]; then
+            say "All required system dependencies are already installed"
+        else
+            say "Missing packages:$MISSING_PACKAGES"
+            # Check if we can run sudo
+            if sudo -n true 2>/dev/null; then
+                say "Installing missing system dependencies with sudo"
+                sudo apt-get update -qq
+                sudo apt-get install -y $MISSING_PACKAGES
+                say "System dependencies installed successfully"
+            else
+                warn "Cannot run sudo automatically. Please install missing system dependencies:"
+                warn "sudo apt-get install$MISSING_PACKAGES"
+                warn "Press Enter to continue anyway, or Ctrl+C to exit and install dependencies first."
+                read -r
+            fi
+        fi
+    elif command -v dnf >/dev/null 2>&1; then
+        warn "Detected Fedora/RHEL system. If you encounter build errors, install:"
+        warn "sudo dnf install postgresql-devel mysql-devel pkgconfig python3-devel"
+    elif command -v pacman >/dev/null 2>&1; then
+        warn "Detected Arch Linux system. If you encounter build errors, install:"
+        warn "sudo pacman -S postgresql-libs mariadb-libs pkgconf python"
+    elif command -v brew >/dev/null 2>&1; then
+        say "Detected macOS with Homebrew, checking dependencies"
+        # For macOS, just try to install (brew handles already installed packages gracefully)
+        if brew list postgresql mysql pkg-config python >/dev/null 2>&1; then
+            say "All required dependencies are already installed"
+        else
+            say "Installing missing dependencies with Homebrew"
+            brew install postgresql mysql pkg-config python
+            say "System dependencies installed successfully"
+        fi
+    else
+        warn "Unknown system. If you encounter build errors during pip install, please install:"
+        warn "PostgreSQL development libraries, MySQL development libraries, pkg-config, and Python development headers"
+    fi
+}
+
+# Install system dependencies if needed (skip in Docker)
+if [ "${SKIP_DEPS:-0}" -eq 0 ]; then
+    install_system_deps
+fi
+
+# Check if we're running in Docker (skip venv creation and dependency checking)
 if [ -f /.dockerenv ] || [ -n "${DOCKER_ENV:-}" ]; then
-    say "Running in Docker - skipping virtual environment creation"
+    say "Running in Docker - skipping virtual environment creation and dependency checks"
+    SKIP_DEPS=1
 else
     say "Creating virtual environment"
     $PY -m venv "$VENV_DIR"
     source "$VENV_DIR/bin/activate"
+    SKIP_DEPS=0
 fi
 
 say "Upgrading pip"
